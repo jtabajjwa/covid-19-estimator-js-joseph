@@ -42,6 +42,7 @@ http.createServer((req, res) => {
                 
                 //Get covid using the estimator
                 let covid19Estimate = covid19ImpactEstimator(covid19_details);
+                res.setHeader("Content-Type", "application/json");
                 return_to_client(req, res, "OK", "200", covid19Estimate, startExecutionTime);
 				
 				
@@ -93,6 +94,27 @@ http.createServer((req, res) => {
     
             });
         }
+    } else if (req.method === 'GET' && req.url === '/api/v1/on-covid-19/log') {
+        
+        //When an error occurs
+        req.on('error', (err) => {
+            console.error(err);
+            //response.statusCode = 400;
+            response.end();
+            return_to_client(req, res, "ERROR", "405", msg, startExecutionTime);
+        });
+
+        //Now return logs
+        let logs = readLogFile();
+        console.log(logs);
+        
+        res.write(logs);
+        res.end();
+
+        //let endExcutionTime = (new Date() - startExecutionTime);
+        writeToLogFile(req.method+"\t\t"+req.url+"\t\t200\t\t"
+            +Math.round(getDurationInMilliseconds(startExecutionTime))+"ms\n");
+        
     } else {
 		console.log("Resource not found:"+ req.url);
 		return_to_client(req, res, "ERROR", "404", '', startExecutionTime);
@@ -104,45 +126,47 @@ http.createServer((req, res) => {
 * handle XML Response
 */
 handleXMlResponse = (req, res, data, startExecutionTime) => {
-    console.log(data);
-    let xml_ = "<Response>"
-        +"<Status>"+data.status+"</Status>";
-        +"<StatusCode>"+data.status_code+"</StatusCode>";
-        +"<Data>";
+    console.log(data.data.data);
+    let xml_ = "<?xml version = '1.0'>"
+        +"<Response>"
+        +"<Status>"+data.status+"</Status>"
+        +"<StatusCode>"+data.status_code+"</StatusCode>"
+        +"<Data>"
             +"<Data>"
                 +"<Region>"
-                    +"<name>"+data.data.region.name+"</name>"
-                    +"<avgAge>"+data.data.region.avgAge+"</avgAge>"
-                    +"<avgDailyIncomeInUSD>"+data.data.region.avgDailyIncomeInUSD+"</avgDailyIncomeInUSD>"
-                    +"<avgDailyIncomePopulation>"+data.data.region.avgDailyIncomePopulation+"</avgDailyIncomePopulation>"
+                    +"<name>"+data.data.data.region.name+"</name>"
+                    +"<avgAge>"+data.data.data.region.avgAge+"</avgAge>"
+                    +"<avgDailyIncomeInUSD>"+data.data.data.region.avgDailyIncomeInUSD+"</avgDailyIncomeInUSD>"
+                    +"<avgDailyIncomePopulation>"+data.data.data.region.avgDailyIncomePopulation+"</avgDailyIncomePopulation>"
                 +"</Region>"
-                +"<periodType>"+data.data.periodType+"</periodType>"
-                +"<timeToElapse>"+data.data.timeToElapse+"</timeToElapse>"
-                +"<reportedCases>"+data.data.avgDailyIncomeInUSD+"</reportedCases>"
-                +"<population>"+data.data.avgDailyIncomePopulation+"</population>"
-                +"<totalHospitalBeds>"+data.data.totalHospitalBeds+"</totalHospitalBeds>"
+                +"<periodType>"+data.data.data.periodType+"</periodType>"
+                +"<timeToElapse>"+data.data.data.timeToElapse+"</timeToElapse>"
+                +"<reportedCases>"+data.data.data.reportedCases+"</reportedCases>"
+                +"<population>"+data.data.data.population+"</population>"
+                +"<totalHospitalBeds>"+data.data.data.totalHospitalBeds+"</totalHospitalBeds>"
             +"</Data>"
             +"<impact>"
-                +"<currentlyInfected>"+data.currentlyInfected+"</currentlyInfected>"
-                +"<infectionsByRequestedTime>"+data.infectionsByRequestedTime+"</infectionsByRequestedTime>"
-                +"<severeCasesByRequestedTime>"+data.severeCasesByRequestedTime+"</severeCasesByRequestedTime>"
-                +"<hospitalBedsByRequestedTime>"+data.hospitalBedsByRequestedTime+"</hospitalBedsByRequestedTime>"
-                +"<casesForICUByRequestedTime>"+data.casesForICUByRequestedTime+"</casesForICUByRequestedTime>"
+                +"<currentlyInfected>"+data.data.impact.currentlyInfected+"</currentlyInfected>"
+                +"<infectionsByRequestedTime>"+data.data.impact.infectionsByRequestedTime+"</infectionsByRequestedTime>"
+                +"<severeCasesByRequestedTime>"+data.data.impact.severeCasesByRequestedTime+"</severeCasesByRequestedTime>"
+                +"<hospitalBedsByRequestedTime>"+data.data.impact.hospitalBedsByRequestedTime+"</hospitalBedsByRequestedTime>"
+                +"<casesForICUByRequestedTime>"+data.data.impact.casesForICUByRequestedTime+"</casesForICUByRequestedTime>"
             +"</impact>"
             +"<severeImpact>"
-                +"<currentlyInfected>"+data.severeImpact.currentlyInfected+"</currentlyInfected>"
-                +"<infectionsByRequestedTime>"+data.severeImpact.infectionsByRequestedTime+"</infectionsByRequestedTime>"
-                +"<severeCasesByRequestedTime>"+data.severeImpact.severeCasesByRequestedTime+"</severeCasesByRequestedTime>"
-                +"<hospitalBedsByRequestedTime>"+data.severeImpact.hospitalBedsByRequestedTime+"</hospitalBedsByRequestedTime>"
-                +"<casesForICUByRequestedTime>"+data.severeImpact.casesForICUByRequestedTime+"</casesForICUByRequestedTime>"
+                +"<currentlyInfected>"+data.data.severeImpact.currentlyInfected+"</currentlyInfected>"
+                +"<infectionsByRequestedTime>"+data.data.severeImpact.infectionsByRequestedTime+"</infectionsByRequestedTime>"
+                +"<severeCasesByRequestedTime>"+data.data.severeImpact.severeCasesByRequestedTime+"</severeCasesByRequestedTime>"
+                +"<hospitalBedsByRequestedTime>"+data.data.severeImpact.hospitalBedsByRequestedTime+"</hospitalBedsByRequestedTime>"
+                +"<casesForICUByRequestedTime>"+data.data.severeImpact.casesForICUByRequestedTime+"</casesForICUByRequestedTime>"
             +"</severeImpact>"
-        +"</Data>";
+        +"</Data>"
     +"</Response>";
 
+    res.setHeader("Content-Type", "application/xml");
     res.write(xml_);
     res.end();
     //let endExcutionTime = (new Date() - startExecutionTime);
-    writeToLogFile(req.method+"\t\t"+req.url+"\t\t"+status_code+"\t\t"
+    writeToLogFile(req.method+"\t\t"+req.url+"\t\t200\t\t"
         +Math.round(getDurationInMilliseconds(startExecutionTime))+"ms\n");
 }
 
@@ -196,6 +220,17 @@ writeToLogFile = (data) => {
         }
         console.log(err);
     });
+}
+
+readLogFile = () => {
+    try {
+        let content = fs.readFileSync(config.log_file, 'utf8');
+        return content;
+    } catch (ex) {
+        console.log('Error: ', ex.stack);
+        return "";
+    }
+    
 }
 
 const getDurationInMilliseconds = (start) => {
