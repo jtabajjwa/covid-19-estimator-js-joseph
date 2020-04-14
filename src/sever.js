@@ -17,7 +17,7 @@ http.createServer((req, res) => {
 
 		//When an error occurs
 		req.on('error', (err) => {
-	    	console.error(err);
+	    	//console.error(err);
 	    	//response.statusCode = 400;
 	    	response.end();
 	    	return_to_client(req, res, "ERROR", "405", msg, startExecutionTime);
@@ -28,14 +28,15 @@ http.createServer((req, res) => {
 		}).on('end', () => {
 			body = Buffer.concat(body).toString();
 			var api_details = null;
-			console.log("Request Body: "+body);
-			//First parse the request body
+			//console.log("Request Body: "+body);
+            //First parse the request body
+            let covid19_details;
 			try {
 
 				try {
 					covid19_details = JSON.parse(body.trim());
 				} catch(ex) {
-					console.log("Exception"+ex);
+					//console.log("Exception"+ex);
 					return_to_client(req, res, "ERROR", "400", '', startExecutionTime);
 					return;
 				}
@@ -47,18 +48,17 @@ http.createServer((req, res) => {
 				
 				
 			} catch (ex) {
-				console.log("Exception"+ex);
+				//console.log("Exception"+ex);
 				return_to_client(req, res, "ERROR", "405", '', startExecutionTime);
 				return;
 			}
 
 		});
 	} else if (req.method === 'POST' && req.url === '/api/v1/on-covid-19/xml') {
-        if (req.method === 'POST' && req.url === '/api/v1/on-covid-19/xml') {
 
             //When an error occurs
             req.on('error', (err) => {
-                console.error(err);
+                //console.error(err);
                 //response.statusCode = 400;
                 response.end();
                 return_to_client(req, res, "ERROR", "405", msg, startExecutionTime);
@@ -87,13 +87,12 @@ http.createServer((req, res) => {
                     handleXMlResponse(req, res, r, startExecutionTime);
                     
                 } catch (ex) {
-                    console.log("Exception"+ex);
+                    //console.log("Exception"+ex);
                     return_to_client(req, res, "ERROR", "405", '', startExecutionTime);
                     return;
                 }
     
             });
-        }
     } else if (req.method === 'GET' && req.url === '/api/v1/on-covid-19/log') {
         
         //When an error occurs
@@ -106,7 +105,7 @@ http.createServer((req, res) => {
 
         //Now return logs
         let logs = readLogFile();
-        console.log(logs);
+        //console.log(logs);
         
         res.write(logs);
         res.end();
@@ -116,7 +115,7 @@ http.createServer((req, res) => {
             +Math.round(getDurationInMilliseconds(startExecutionTime))+"ms\n");
         
     } else {
-		console.log("Resource not found:"+ req.url);
+		//console.log("Resource not found:"+ req.url);
 		return_to_client(req, res, "ERROR", "404", '', startExecutionTime);
 	}
 
@@ -126,7 +125,7 @@ http.createServer((req, res) => {
 * handle XML Response
 */
 handleXMlResponse = (req, res, data, startExecutionTime) => {
-    console.log(data.data.data);
+    //console.log(data.data.data);
     let xml_ = "<?xml version = '1.0'>"
         +"<Response>"
         +"<Status>"+data.status+"</Status>"
@@ -218,7 +217,7 @@ writeToLogFile = (data) => {
         if (err) {
             return;
         }
-        console.log(err);
+        //console.log(err);
     });
 }
 
@@ -227,7 +226,7 @@ readLogFile = () => {
         let content = fs.readFileSync(config.log_file, 'utf8');
         return content;
     } catch (ex) {
-        console.log('Error: ', ex.stack);
+        //console.log('Error: ', ex.stack);
         return "";
     }
     
